@@ -4,47 +4,47 @@ import time
 import random
 
 NUM_PHILOSOPHERS = 5
-MAX_EATS = [2]*NUM_PHILOSOPHERS
+MAX_EATS = 2 # Maximum number of times each philosopher eats.
 
-def right(i):
-    return i
+def rightNeighbour(i):
+    return (i-1) % NUM_PHILOSOPHERS
 
-def left(i):
+def leftNeighbour(i):
     return (i+1) % NUM_PHILOSOPHERS
 
-def get_forks(i, state, sem, mutex):
+def getForks(i, state, sem, mutex):
     mutex.acquire()
-    state[i] = 'hungry'
+    state[i] = "hungry"
     print("Philosopher", i, "is hungry.")
     test(i, state, sem)
     mutex.release()
     sem[i].acquire()
 
-def put_forks(i, state, sem, mutex):
+def putForks(i, state, sem, mutex):
     mutex.acquire()
-    state[i] = 'thinking'
+    state[i] = "thinking"
     print("Philosopher", i, "is thinking.")
-    test(left(i), state, sem)
-    test(right(i), state, sem)
+    test(leftNeighbour(i), state, sem)
+    test(rightNeighbour(i), state, sem)
     mutex.release()
 
 def test(i, state, sem):
-    if state[i] == 'hungry' and state[left(i)] != 'eating' and state[right(i)] != 'eating':
-        state[i] = 'eating'
+    if state[i] == "hungry" and state[leftNeighbour(i)] != "eating" and state[rightNeighbour(i)] != "eating":
+        state[i] = "eating"
         print("Philosopher", i, "is eating.")
         sem[i].release()
 
 def philosopher(i, state, sem, mutex):
     numEats = 0
-    while numEats < MAX_EATS[i]:
+    while numEats < MAX_EATS:
         time.sleep(0.001*random.randint(0,100)) # Simulate thinking.
-        get_forks(i, state, sem, mutex)
+        getForks(i, state, sem, mutex)
         time.sleep(0.001*random.randint(0,100)) # Simulate eating.
-        put_forks(i, state, sem, mutex)
+        putForks(i, state, sem, mutex)
         numEats += 1
 
 def main():
-    state = ['thinking']*NUM_PHILOSOPHERS
+    state = ["thinking"]*NUM_PHILOSOPHERS
     sem = [threading.Semaphore(0) for i in range(NUM_PHILOSOPHERS)]
     mutex = threading.Lock()
 
