@@ -20,8 +20,8 @@ func cook(pot chan int, emptyPot chan int, cookSignal *flag) {
 	for {
 		<-emptyPot
 		fmt.Println("Cook refills the pot.")
-		time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Simulates time to refill the pot.
 		for i := 0; i < numServings; i++ {
+			time.Sleep(time.Duration(rand.Intn(10)) * time.Millisecond) // Simulates time to refill each serving.
 			pot <- i
 		}
 		cookSignal.Lock()
