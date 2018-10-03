@@ -4,7 +4,7 @@ import time
 import random
 
 NUM_PHILOSOPHERS = 5
-MAX_EATS = 2 # Maximum number of times each philosopher eats.
+MAX_HELPINGS = 2 # Maximum number of times each philosopher eats.
 
 def rightNeighbour(i):
     return (i-1) % NUM_PHILOSOPHERS
@@ -35,13 +35,13 @@ def test(i, state, sem):
         sem[i].release()
 
 def philosopher(i, state, sem, mutex):
-    numEats = 0
-    while numEats < MAX_EATS:
+    numHelpings = 0
+    while numHelpings < MAX_HELPINGS:
         time.sleep(0.001*random.randint(0,100)) # Simulate thinking.
         getForks(i, state, sem, mutex)
         time.sleep(0.001*random.randint(0,100)) # Simulate eating.
         putForks(i, state, sem, mutex)
-        numEats += 1
+        numHelpings += 1
 
 def main():
     state = ["thinking"]*NUM_PHILOSOPHERS

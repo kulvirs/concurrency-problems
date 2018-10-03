@@ -9,7 +9,7 @@ import (
 )
 
 const numPhilosophers = 5
-const maxEats = 2 // Maximum number of times each philosopher eats.
+const maxHelpings = 2 // Maximum number of times each philosopher eats.
 
 func rightFork(i int) int {
 	return i
@@ -30,8 +30,8 @@ func putForks(i int, rightFork chan int, leftFork chan int) {
 }
 
 func philosopher(i int, table chan int, rightFork chan int, leftFork chan int, wg *sync.WaitGroup) {
-	numEats := 0
-	for numEats < maxEats {
+	numHelpings := 0
+	for numHelpings < maxHelpings {
 		time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Simulates time to think.
 		fmt.Println("Philosopher", i, "is hungry")
 		table <- i
@@ -41,7 +41,7 @@ func philosopher(i int, table chan int, rightFork chan int, leftFork chan int, w
 		putForks(i, rightFork, leftFork)
 		fmt.Println("Philosopher", i, "is thinking")
 		<-table
-		numEats++
+		numHelpings++
 	}
 	wg.Done()
 }
