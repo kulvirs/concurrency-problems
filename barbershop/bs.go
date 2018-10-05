@@ -1,3 +1,4 @@
+// This is an implementation using Go channels of the solution described in the Little Book of Semaphores.
 package main
 
 import (
@@ -24,17 +25,22 @@ func getHairCut(i int) {
 	time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Simulates time to get haircut.
 }
 
+func cutHair() {
+	time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Simulates time to give a haircut.
+}
+
 func barberThread(customer chan int, barber chan int, customerDone chan int, barberDone chan int) {
 	for {
 		customerNum := <-customer
 		barber <- customerNum
-		// cutHair() time simulated by getHairCut()
+		cutHair()
 		customerNum = <-customerDone
 		barberDone <- customerNum
 	}
 }
 
 func customerThread(i int, numCustomers *counter, customer chan int, barber chan int, customerDone chan int, barberDone chan int, wg *sync.WaitGroup) {
+	fmt.Println("Customer", i, "enters the barbershop.")
 	numCustomers.Lock()
 	if numCustomers.value == maxCustomers {
 		numCustomers.Unlock()
@@ -42,7 +48,6 @@ func customerThread(i int, numCustomers *counter, customer chan int, barber chan
 		return
 	}
 	numCustomers.value++
-	fmt.Println("Customer", i, "enters the barbershop.")
 	numCustomers.Unlock()
 
 	customer <- i

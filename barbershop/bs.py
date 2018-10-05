@@ -15,15 +15,19 @@ def getHairCut(i):
     print("Customer", i, "gets a haircut.")
     time.sleep(0.001*random.randint(0,100)) # Simulate time to get a haircut.
 
+def cutHair():
+    time.sleep(0.001*random.randint(0,100)) # Simulate time to give a haircut.
+
 def barberThread(customer, barber, customerDone, barberDone):
     while True:
         customer.acquire()
         barber.release()
-        # cutHair() Time simulation is done by getHairCut()
+        cutHair()
         customerDone.acquire()
         barberDone.release()
 
 def customerThread(i, mutex, customer, barber, customerDone, barberDone):
+    print("Customer", i, "enters the barbershop.")
     global numCustomers
     mutex.acquire()
     if numCustomers == MAX_CUSTOMERS:
@@ -31,7 +35,6 @@ def customerThread(i, mutex, customer, barber, customerDone, barberDone):
         balk(i)
         return
     numCustomers += 1
-    print("Customer", i, "enters the barbershop.")
     mutex.release()
 
     customer.release()
