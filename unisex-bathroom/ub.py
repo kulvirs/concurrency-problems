@@ -59,18 +59,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-'''
-one shared mutex, is either: empty, female, or male
-male and female queues of size 3
-female:
-q.put()
-if empty: employee enters, and sets mutex to female accordingly, increment counter
-if male: wait for signal
-if female: if male queue not empty, block, set to male, and wait for signal, otherwise increment counter
-
-receive signal 
-increment counter
-
-leaving: decrement counter, if counter == 0, set mutex to empty, q.pop()
-
-'''
