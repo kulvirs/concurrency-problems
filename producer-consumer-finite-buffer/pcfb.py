@@ -1,12 +1,13 @@
-# This is an implementation of the solution from the Little Book of Semaphores using semaphores and mutices. 
+# This implementation uses Python's syncronized queue.
 
-import threading
+from threading import Thread
+import queue
 import time
 import random
 
+BUF_LEN = 5
+NUM_PRODUCERS = 1000
 NUM_CONSUMERS = 1
-NUM_PRODUCERS = 10
-BUF_LEN = 2
 
 def produceEvent(event):
     time.sleep(0.001*random.randint(0,100)) # Simulate producing event.
@@ -16,41 +17,30 @@ def consumeEvent(event):
     time.sleep(0.001*random.randint(0,100)) # Simulate consuming event.
     print("Consumed event", event)
 
-def producer(event, buffer, mutex, items, spaces):
+def producer(event, buffer):
     if event is not None:
         produceEvent(event)
-    spaces.acquire()
-    mutex.acquire() 
-    buffer.append(event)
-    mutex.release()
-    items.release()
+    buffer.put(event)
 
-def consumer(buffer, mutex, items, spaces):
+def consumer(buffer):
     while True:
-        items.acquire()
-        mutex.acquire()
-        event = buffer.pop(0)
-        mutex.release()
-        spaces.release()
+        event = buffer.get()
         if event is None:
             break
         consumeEvent(event)
-
+        
 def main():
-    buffer = []
-    mutex = threading.Lock() # Provides exclusive access to buffer.
-    items = threading.Semaphore(0) # Indicates whether there are items in the buffer.
-    spaces = threading.Semaphore(BUF_LEN) # Indicates number of available spaces in the buffer.
-
+    buffer = queue.Queue(BUF_LEN) # Finite-sized buffer.
+    
     consumerThreads = []
     for i in range(NUM_CONSUMERS):
-        consumerThread = threading.Thread(target=consumer, args=(buffer, mutex, items, spaces))
+        consumerThread = Thread(target=consumer, args=(buffer,))
         consumerThreads.append(consumerThread)
         consumerThread.start()
 
     producerThreads = []
     for i in range(NUM_PRODUCERS):
-        producerThread = threading.Thread(target=producer, args=(i, buffer, mutex, items, spaces))
+        producerThread = Thread(target=producer, args=(i,buffer))
         producerThreads.append(producerThread)
         producerThread.start()
 
@@ -58,10 +48,12 @@ def main():
         thread.join()
     
     for i in range(NUM_CONSUMERS):
-        threading.Thread(target=producer, args=(None, buffer, mutex, items, spaces)).start()
+        Thread(target=producer, args=(None,buffer)).start()
 
     for thread in consumerThreads:
         thread.join()
 
 if __name__ == "__main__":
     main()
+
+
