@@ -69,8 +69,8 @@ def main():
 
         global startTimes
         global endTimes
-        duration = [endTimes[i] - startTimes[i] for i in range(NUM_PRODUCERS)]
-        averageWaitTimes[j] = sum(duration)/len(duration)
+        waitTimes = [endTimes[i] - startTimes[i] for i in range(NUM_PRODUCERS)]
+        averageWaitTimes[j] = sum(waitTimes)/len(waitTimes)
         averageDurations[j] = end-start
 
     print("Average wait time:", sum(averageWaitTimes)/len(averageWaitTimes), "s")
