@@ -89,7 +89,7 @@ The Little Book of Semaphores lists the following synchronization constraints on
 2) If a consumer thread arrives while the buffer is empty, it blocks until a producer adds a new item.
 3) If a producer arrives when the buffer is full, it blocks until a consumer removes an item.
 
-Python's synchronized queue [documentation](https://docs.python.org/3/library/queue.html) confirms that all three of these conditions hold for Solution 1. In a synchronized queue, only one thread at any given time can modify the queue, the put() method will "block if necessary until a free slot is available", and the get() method will also "block if necessary until an item is available".   
+Python's synchronized queue [documentation](https://docs.python.org/3/library/queue.html) confirms that one thread at any given time can modify the queue, the put() method will "block if necessary until a free slot is available", and the get() method will also "block if necessary until an item is available".   
 Similarly, the Tour of Go section on [buffered channels](https://tour.golang.org/concurrency/3) states that "sends to a buffered channel block only when the buffer is full. Receives block when the buffer is empty."   
 Therefore we can conclude that both solutions are correct in their implementation. The results of Test 1 also back up this claim, as we can see that items are not removed until there is something in the buffer to remove, and items are not placed in the full buffer until something is removed.
 
@@ -100,5 +100,5 @@ Imagine we presented both of these solutions to somebody who is familiar with pr
 ### Performance
 Performance-wise it is very clear that Solution 2 is better. Each item in Solution 2 spends significantly less time waiting between production and consumption and the overall time to produce and consume all the items is also significantly faster than Solution 1.
 There are a number of reasons why Solution 2 performs better. Firstly, Solution 1 is implemented in Python, which, while it is known for being more readable, is interpreted at run time instead of compiled to native code at compile time. It also is a higher level language than Go, so many details are abstracted away from the user, such as memory management, pointers, etc, and managing all this takes more time.  
-Finally, the synchronized Queue used in Solution 1 is not a primitive type like channels are in Go. If we look at the [source code](https://github.com/python/cpython/blob/3.7/Lib/queue.py) for the synchronized queue, we can see that behind the scenes it uses mutexes and conditions, so while the code may look short to us when we use it, there is a lot more overhead to handle synchronization in Solution 1 than there is in Solution 2.
+Finally, the synchronized queue used in Solution 1 is not a primitive type like channels are in Go. If we look at the [source code](https://github.com/python/cpython/blob/3.7/Lib/queue.py) for the synchronized queue, we can see that behind the scenes it uses mutexes and conditions, so while the code may look short to us when we use it, there is a lot more overhead to handle synchronization in Solution 1 than there is in Solution 2.
 
