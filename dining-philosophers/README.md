@@ -16,7 +16,7 @@ Test 1 - Correctness: The output of each solution on the same configuration (5 p
 
 Test 2 - Performance: The print and sleep statements are removed. The average duration of the entire program as well as the average wait time over 100 trials on the same configuration (5 philosophers, 100 helpings per philosopher) is recorded. The wait time is defined as the amount of time a philosopher spends waiting to eat during the entire program.
 
-Solution 1 - `dp.py`
+### Solution 1 - `dp.py`
 This implementation is written in Python and follows the solution proposed by Tanenbaum in the Little Book of Semaphores. It uses locks and semaphores.
 
 Test 1 Output:
@@ -59,7 +59,7 @@ Average waiting time: 6.438846588134761e-05 s
 Average duration: 0.010681324005126953 s
 ```
 
-Solution 2 - `dp.go`
+### Solution 2 - `dp.go`
 This implementation is written in Go and follows Solution #1 from the Little Book of Semaphores, except channels are used in the place of Semaphores.
 
 Test 1 Output:
@@ -114,17 +114,18 @@ The Little Book of Semaphores presents the following synchronization constraints
 Constraint 1 is satisfied by both solutions. In Solution 1, a philosopher only picks up the forks beside him if neither of his neighbours are eating, which guarantees that only one philosopher holds a fork. In Solution 2, each fork is modelled as a buffered channel of size 1, which means there can only ever be one philosopher in a fork buffer, and everyone else would be blocked.  
 Constraint 2 is also satisfied by both solutions. In Solution 1, deadlock is impossible because `mutex` is the only synchronization variable accessed by all threads (philosophers), and no thread executes any blocking calls while holding `mutex`. In Solution 2, we only ever allow `numPhilosophers-1` philosophers to sit at the table. This makes deadlock impossible because even if every philosopher picks up a fork at the same time, there will still be one fork remaining at the table, which either of its adjacent philosophers can pick up and start eating.   
 Constraint 3 is not satisfied by Solution 1. As is described in the Little Book of Semaphores, it is possible that a philosopher never gets to eat because one of its neighbours is always eating whenever it gets signalled. Since we have limited our solution to be finite however, starvation will never happen because eventually all neighbours of any philosopher will have eaten all their helpings and they will no longer try to acquire the mutex. Constraint 3 is satisfied by Solution 2, in both the finite and infinite case. If a philosopher is waiting for a fork, it is guaranteed that eventually his neighbour holding that fork will finish eating. At that point, no other thread is waiting for the fork, so the philosopher will get the fork and be able to eat.  
-Constraint 4 is also satisfied by both solutions. In Solutions 1 and 2, a philosopher can eat as long as his neighbours are not, which means non-adjacent philosophers can be eating at same time.   
+Constraint 4 is also satisfied by both solutions. In Solutions 1 and 2, a philosopher can eat as long as his neighbours are not, which means non-adjacent philosophers can be eating at same time.  
+The output from Test 1 also supplies some evidence that these constraints are met, as we never see adjacent philosophers eating at the same time, nor do we see deadlock, or starvation, and we can clearly see that some philosophers are eating at the same time as others.  
 Overall, due to Solution 1 not satisfying Constraint 3 in the infinite case, we can conclude that Solution 2 is more correct.
 
 ### Comprehensibility
-Not including the code in `main()` which is mostly just the overhead of creating the threads and measuring run time, Solution 1 uses 39 lines of code for the philosopher threads. Solution 2 uses 36, 30 if you don't count the curly braces that are included in Go. 
-In terms of understanding the code, Solution 2 just uses buffered channels. Looking at the code, it is pretty easy to explain to somebody what is going on, philosophers wait until they can sit at the table, and then wait until their right and left fork is free. At this point they can eat, and then they release their right and left fork, and leave the table.
+Not including the code in `main()` which is mostly just the overhead of creating the threads and measuring run time, Solution 1 uses 39 lines of code for the philosopher threads. Solution 2 uses 36, 30 if you don't count the curly braces that are included in Go.  
+In terms of understanding the code, Solution 2 just uses buffered channels. Looking at the code, it is pretty easy to explain to somebody what is going on, philosophers wait until they can sit at the table, and then wait until their right and left fork is free. At this point they can eat, and then they release their right and left fork, and leave the table.  
 Solution 1 on the other hand uses Semaphores and a Lock. The solution takes a bit more work to explain and it's not intuitively obvious just by reading the code once why it works. However, the use of the state variable being set to "hungry", "thinking", or "eating" for each philosopher does help in understanding what is happening in the code.
 Overall, Solution 2 is shorter and intuitively easier to understand than Solution 1.
 
 ### Performance
 From the results we can see that in Solution 2, each philosopher thread waits when it is hungry on average 10 times longer than it does in Solution 1. However, the overall duration of Solution 2 is about 12 times faster than Solution 1.   
 As mentioned earlier, in Solution 2 we only allow `numPhilosophers-1` people to sit at the table at the same time. While this approach does avoid deadlock, it means that we are not utilizing the full concurrency of our system. It is possible that philosophers that are waiting for the table to have less than 4 people at it could have sat down and eaten if not for this restriction. This could be what causes the philosopher threads in Solution 2 to have a longer average wait time than the threads in Solution 2.  
-Overall though, Solution 1 runs faster than Solution 2. This could be because the overhead of having Semaphores and Locks in Python is still much slower than using channels in Go, so even though each thread is waiting for less time in Solution 1, the overall synchronization takes longer. 
+Overall though, Solution 1 runs faster than Solution 2. This could be because the overhead of having Semaphores and Locks in Python is still much slower than using channels in Go, so even though each thread is waiting for less time in Solution 1, the overall synchronization takes longer.   
 In terms of which solution performs better, it depends what we are prioritizing. If we want each philosopher to wait the least amount of time, then Solution 1 performs better. If we want the overall program to take as little time as possible, then Solution 2 performs better.
