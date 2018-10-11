@@ -3,7 +3,10 @@ import threading
 import random
 import time
 
-NUM_EMPLOYEES = 10 # Total number of employees that will arrive.
+NUM_EMPLOYEES = 100 # Total number of employees that will arrive.
+NUM_TRIALS = 100
+
+waitingTimes = [0]*NUM_EMPLOYEES
 
 class LightSwitch:
     def __init__(self):
@@ -25,36 +28,68 @@ class LightSwitch:
         self.mutex.release()
 
 def maleEmployee(i, empty, maleSwitch, maleMultiplex):
-    print("Male employee", i, "arrives.")
+    #time.sleep(0.001*random.randint(0,100)) # Simulate time between employees arriving.
+    #print("Male employee", i, "arrives.")
+    global waitingTimes
+    start = time.time()
     maleSwitch.lock(empty)
     maleMultiplex.acquire()
-    print("Male employee", i, "enters the bathroom.")
-    time.sleep(0.001*random.randint(0,100)) # Simulate time to use the bathroom.
-    print("Male employee", i, "leaves the bathroom.")
+    end = time.time()
+    #print("Male employee", i, "enters the bathroom.")
+    #time.sleep(0.001*random.randint(0,100)) # Simulate time to use the bathroom.
+    #print("Male employee", i, "leaves the bathroom.")
     maleMultiplex.release()
     maleSwitch.unlock(empty)
+    waitingTimes[i] = end-start
 
 def femaleEmployee(i, empty, femaleSwitch, femaleMultiplex):
-    print("Female employee", i, "arrives.")
+    global waitingTimes
+    #time.sleep(0.001*random.randint(0,100)) # Simulate time between employees arriving.
+    #print("Female employee", i, "arrives.")
+    start = time.time()
     femaleSwitch.lock(empty)
     femaleMultiplex.acquire()
-    print("Female employee", i, "enters the bathroom.")
-    time.sleep(0.001*random.randint(0,100)) # Simulate time to use the bathroom.
-    print("Female employee", i, "leaves the bathroom.")
+    end = time.time()
+    #print("Female employee", i, "enters the bathroom.")
+    #time.sleep(0.001*random.randint(0,100)) # Simulate time to use the bathroom.
+    #print("Female employee", i, "leaves the bathroom.")
     femaleMultiplex.release()
     femaleSwitch.unlock(empty)
+    waitingTimes[i] = end-start
 
 def main():
-    empty = threading.Lock()
-    maleSwitch = LightSwitch()
-    femaleSwitch = LightSwitch()
-    maleMultiplex = threading.Semaphore(3)
-    femaleMultiplex = threading.Semaphore(3)
+    durations = [0]*NUM_TRIALS
+    averageWaitingTimes = [0]*NUM_TRIALS
 
-    for i in range(NUM_EMPLOYEES):
-        time.sleep(0.001*random.randint(0,100)) # Simulate time between employees arriving.
-        employeeThread = threading.Thread(target=maleEmployee, args=(i, empty, maleSwitch, maleMultiplex)) if random.randint(0,1) == 0 else threading.Thread(target=femaleEmployee, args=(i, empty, femaleSwitch, femaleMultiplex))
-        employeeThread.start()
+    for j in range(NUM_TRIALS):
+        empty = threading.Lock()
+        maleSwitch = LightSwitch()
+        femaleSwitch = LightSwitch()
+        maleMultiplex = threading.Semaphore(3)
+        femaleMultiplex = threading.Semaphore(3)
+
+        start = time.time()
+        employees = []
+        for i in range(0, NUM_EMPLOYEES, 2):
+            mEmployee = threading.Thread(target=maleEmployee, args=(i, empty, maleSwitch, maleMultiplex))
+            employees.append(mEmployee)
+            mEmployee.start()
+            fEmployee = threading.Thread(target=femaleEmployee, args=(i+1, empty, femaleSwitch, femaleMultiplex))
+            employees.append(fEmployee)
+            fEmployee.start()
+
+        for thread in employees:
+            thread.join()
+        end = time.time()
+
+        global waitingTimes
+        durations[j] = end - start
+        averageWaitingTimes[j] = sum(waitingTimes)/len(waitingTimes)
+        waitingTimes = [0]*NUM_EMPLOYEES
+    
+    print("Average wait time:", sum(averageWaitingTimes)/len(averageWaitingTimes), "s")
+    print("Average duration:", sum(durations)/len(durations), "s")
+        
 
 if __name__ == "__main__":
     main()
