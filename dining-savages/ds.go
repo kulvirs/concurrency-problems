@@ -2,71 +2,69 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"sync"
 	"time"
 )
 
 const numServings = 5 // The number of servings the pot can hold.
-const numSavages = 10
-const maxHelpings = 4 // The maximum number of times each savage eats.
+const numSavages = 50
+const maxHelpings = 3 // The maximum number of times each savage eats.
+const numTrials = 100
 
-type flag struct {
-	sync.Mutex
-	value bool
-}
+var waitTimes [numSavages]float64
 
-func cook(pot chan int, emptyPot chan int, cookSignal *flag) {
+func cook(pot chan int, emptyPot chan int) {
 	for {
-		<-emptyPot
-		fmt.Println("Cook refills the pot.")
-		for i := 0; i < numServings; i++ {
-			time.Sleep(time.Duration(rand.Intn(10)) * time.Millisecond) // Simulates time to refill each serving.
+		//fmt.Println("Cook refills the pot.")
+		for i := 1; i <= numServings; i++ {
 			pot <- i
 		}
-		cookSignal.Lock()
-		cookSignal.value = false
-		cookSignal.Unlock()
+		<-emptyPot
 	}
 }
 
-func savage(i int, pot chan int, emptyPot chan int, cookSignal *flag, wg *sync.WaitGroup) {
+func savage(i int, pot chan int, emptyPot chan int, wg *sync.WaitGroup) {
 	numHelpings := 0
 	for numHelpings < maxHelpings {
-		select {
-		case <-pot:
-			// There is food in the pot.
-			fmt.Println("Savage", i, "takes a serving from the pot.")
-			time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Simulates time to get a serving from the pot.
-		default:
-			// There is no food in the pot.
-			cookSignal.Lock()
-			if !cookSignal.value {
-				// Send a signal to the cook about the empty pot.
-				emptyPot <- i
-				cookSignal.value = true
-			}
-			cookSignal.Unlock()
-			<-pot // Block until there is food in the pot.
-			fmt.Println("Savage", i, "takes a serving from the pot.")
-			time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Simulates time to get a serving from the pot.
+		//time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Simulates time between getting hungry.
+		start := time.Now()
+		serving := <-pot
+		end := time.Now()
+		//fmt.Println("Savage", i, "takes serving", serving, "from the pot.")
+		if serving == numServings {
+			emptyPot <- i // No more servings remaining, so we signal the cook.
 		}
-		time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Simulates time to eat the serving.
+		//time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond) // Simulates time to get and eat the serving.
 		numHelpings++
+		waitTimes[i] += end.Sub(start).Seconds()
 	}
 	wg.Done()
 }
 
 func main() {
-	var wg sync.WaitGroup
-	pot := make(chan int, numServings)
-	emptyPot := make(chan int, 1)
-	var cookSignal = &flag{value: false} // Keeps track of whether the cook has been signalled to refill the pot.
+	var durations float64
+	var averageWaitTimes float64
+	for j := 0; j < numTrials; j++ {
+		var wg sync.WaitGroup
+		pot := make(chan int, numServings)
+		emptyPot := make(chan int, 1)
 
-	wg.Add(numSavages)
-	go cook(pot, emptyPot, cookSignal)
-	for i := 0; i < numSavages; i++ {
-		go savage(i, pot, emptyPot, cookSignal, &wg)
+		start := time.Now()
+		wg.Add(numSavages)
+		go cook(pot, emptyPot)
+		for i := 0; i < numSavages; i++ {
+			go savage(i, pot, emptyPot, &wg)
+		}
+		wg.Wait()
+		end := time.Now()
+		durations += end.Sub(start).Seconds()
+		var sumWaitTimes float64
+		for i := 0; i < numSavages; i++ {
+			sumWaitTimes += waitTimes[i]
+			waitTimes[i] = 0
+		}
+		averageWaitTimes += sumWaitTimes / numSavages
 	}
-	wg.Wait()
+	fmt.Println("Average wait time:", averageWaitTimes/numTrials, "s")
+	fmt.Println("Average duration:", durations/numTrials, "s")
 }
