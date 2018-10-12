@@ -7,14 +7,14 @@ Imagine we have a barbershop with n chairs, and a barber room containing a barbe
 The sleeping barber problem presents a classic example of the challenge of synchronizing and communicating between threads. An example application of this could be having mulitple worker threads (customers), each running part of some large computation. At some point each worker would need to synchronize with the parent thread (barber) to give it the result of its portion of the computation. The number of worker threads running concurrently would also have to be limited to ensure CPU usage doesn't get too high, which brings in the waiting room concept.
 
 ## Results
-Each program prints when a customer enters, when they get a haircut, and when they leave the barbershop. If a customer balks, this is printed as well. The customer threads sleep for random amounts of time to simulate the time between customers arriving, and the customer and barber sleep for a random amount of time to simulat the time to get a haircut. The following results were gathered for each solution:
+Each program prints when a customer enters, when they get a haircut, and when they leave the barbershop. If a customer balks, this is printed as well. The customer threads sleep for random amounts of time to simulate the time between customers arriving, and the customer and barber sleep for a random amount of time to simulate the time to get a haircut. The following results were gathered for each solution:
 
 Test 1 - Correctness: The output of each solution on the same configuration (barbershop capacity 4, 10 total customers) is recorded. (Other test configurations were run, but for brevity, only this one is recorded in the analysis).
 
 Test 2 - Performance: The sleep and print statements are removed. The average duration and waiting time of the program over 100 trials on the same configuration (barbershop capacity 4, 100 total customers) is recorded. The waiting time is defined as the amount of time a customer waits for a haircut. This does not account for customers that balk.
 
 ### Solution 1 - `bs.py`
-This solution is implemented in Python and models the problem using a synchronized queue for the waiting a chairs and a lock for the barber chair.
+This solution is implemented in Python and models the problem using a synchronized queue for the waiting chairs and a lock for the barber chair.
 
 Test 1 Output:
 ```
